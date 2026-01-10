@@ -1,4 +1,4 @@
-# hik_camera
+# Hikrobot Industrial Camera Driver
 
 - 海康 MVS 工业相机驱动
 - 提供 C++ 类库接口与示例程序

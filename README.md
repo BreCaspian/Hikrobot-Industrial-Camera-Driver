@@ -4,6 +4,13 @@
 - 提供 C++ 类库接口与示例程序
 - 支持高性能推理引擎
 
+<p align="center">
+  <img src="doc/Radar.png" width="800" alt="Radar">
+  <br>
+  <em>MV-CS200-10UMUC runtime example</em>
+</p>
+
+
 ## 已支持机型
 
 - [MV-CS200-10UMUC](doc/MV-CS200-10UMUC_20241104_9799.pdf)（USB3.0，5472x3648，Bayer GB8）

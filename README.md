@@ -217,7 +217,7 @@ cmake .. -DMVS_ROOT=/opt/MVS -DCMAKE_CUDA_ARCHITECTURES=86
 2) 帧率跑不满标称值  
    - `AcquisitionFrameRate` 已设置但 FPS 低，多数为 USB 链路吞吐限制。可通过 ROI 降低带宽验证。
 
-3) 需要 OpenCV CUDA 支持  
+3) 若需要 OpenCV CUDA 支持 （可选）
    - 在 Ubuntu 22.04 上需从源码编译 OpenCV 并开启 CUDA，避免使用不含 CUDA 的系统包。
    - https://blog.csdn.net/SoNg_ch_/article/details/132054785
    - https://blog.csdn.net/Natsuago/article/details/145785243

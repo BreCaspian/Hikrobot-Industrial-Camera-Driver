@@ -1,3 +1,4 @@
+
 # Hikrobot Industrial Camera Driver
 
 - 海康 MVS 工业相机驱动
@@ -9,7 +10,6 @@
   <br>
   <em>MV-CS200-10UMUC runtime example</em>
 </p>
-
 
 ## 已支持机型
 
@@ -41,11 +41,11 @@ make -j"$(nproc)"
 │       ├── gpu_demosaic_npp.h            # NPP 去马赛克声明
 │       ├── PixelType.h                   # 像素格式枚举
 │       ├── MvCameraControl.h             # MVS SDK 头文件
-│       ├── CameraParams.h                
-│       ├── MvErrorDefine.h               
-│       ├── MvISPErrorDefine.h          
-│       ├── MvObsoleteInterfaces.h        
-│       └── ObsoleteCamParams.h           
+│       ├── CameraParams.h
+│       ├── MvErrorDefine.h
+│       ├── MvISPErrorDefine.h
+│       ├── MvObsoleteInterfaces.h
+│       └── ObsoleteCamParams.h
 ├── src/
 │   ├── hik_camera.cpp                   # 设备管理 参数配置
 │   ├── hik_camera_config.cpp            # 配置加载 路径解析
@@ -64,8 +64,8 @@ make -j"$(nproc)"
 ## 上下游接口
 
 - 输入：相机设备 + 配置文件
-- 输出：`hik_camera::Frame`（`bgr`/`raw`/GPU 指针/时间戳）
-- 下游：detector/control（消费图像、时间戳；GPU-only 时消费 `gpu_bgr_ptr`）
+- 输出：hik_camera::Frame（bgr/raw/GPU 指针/时间戳）
+- 下游：detector/control（消费图像、时间戳；GPU-only 时消费 gpu_bgr_ptr）
 
 ## 构建
 
@@ -94,7 +94,7 @@ CUDA 架构优化（可选）：
 cmake .. -DMVS_ROOT=/opt/MVS -DCMAKE_CUDA_ARCHITECTURES=86
 ```
 
-支持的架构示例（`compute_XX / SM_XX`）：
+支持的架构示例（compute_XX / SM_XX）：
 
 | 架构 | 说明 |
 | --- | --- |
@@ -110,7 +110,7 @@ cmake .. -DMVS_ROOT=/opt/MVS -DCMAKE_CUDA_ARCHITECTURES=86
 | **SM89 / compute_89** | Lovelace：RTX 4090/4080 |
 | **SM90 / compute_90** | Hopper：H100 |
 
-说明：如遇 NVCC 报 `compute_` 架构相关错误，可显式指定 `CMAKE_CUDA_ARCHITECTURES`。
+说明：如遇 NVCC 报 compute_ 架构相关错误，可显式指定 CMAKE_CUDA_ARCHITECTURES。
 
 ## 运行示例
 
@@ -120,63 +120,62 @@ cmake .. -DMVS_ROOT=/opt/MVS -DCMAKE_CUDA_ARCHITECTURES=86
 
 ## 接口要点
 
-- 阻塞读取：`HikCamera::read(Frame*, timeout_ms)`
-- 回调模式：`HikCamera::setFrameCallback(cb)`（不要与 `read()` 混用）
-- `Frame::bgr`：BGR8 `cv::Mat`
-- `Frame::raw_data`：原始 payload（需开启 `output_raw`）
-- `Frame::bgr_ptr`：BGR 缓冲指针（启用零拷贝时使用）
-- `Frame::bgr_size`：BGR 缓冲大小（字节）
-- `Frame::gpu_bgr_ptr`：GPU 端 BGR 指针（`gpu_output_only=1` 时有效）
-- `Frame::gpu_stream`：CUDA stream 指针（`gpu_bgr_ptr` 有效时可用于下游异步处理）
+- 阻塞读取：HikCamera::read(Frame*, timeout_ms)
+- 回调模式：HikCamera::setFrameCallback(cb)（不要与 read() 混用）
+- Frame::bgr：BGR8 cv::Mat
+- Frame::raw_data：原始 payload（需开启 output_raw）
+- Frame::bgr_ptr：BGR 缓冲指针（启用零拷贝时使用）
+- Frame::bgr_size：BGR 缓冲大小（字节）
+- Frame::gpu_bgr_ptr：GPU 端 BGR 指针（gpu_output_only=1 时有效）
+- Frame::gpu_stream：CUDA stream 指针（gpu_bgr_ptr 有效时可用于下游异步处理）
 
 ## 配置说明（config/config.yaml）
 
-- 设备选择：`serial_number`/`use_first_device`/`device_index`
-- 触发与帧率：`trigger_mode`/`trigger_source`，`frame_rate_enable`/`frame_rate`
-- 畸变校正：`undistort_enable=1` + `calib_path`（CPU）
-- `calib_path` 支持 ROS YAML（`camera_matrix`/`distortion_coefficients` 或 `K`/`D`）
-- 自动曝光限幅：`auto_exposure_time_lower_us`/`auto_exposure_time_upper_us`（会自动夹紧到设备范围）
-- Gamma/亮度：`gamma_enable`/`gamma_selector`/`gamma`，`brightness_enable`/`brightness`
-- 重连：`reconnect_enable` + `reconnect_*`
-- 参数持久化：`feature_load_*`、`feature_save_*`
-- ROI：`roi_enable`/`roi_offset_x`/`roi_offset_y`/`roi_width`/`roi_height`
-- 输出：`output_bgr`/`output_raw`/`copy_raw`（`copy_raw=0` 仅在回调模式下有效）
-- 零拷贝帧池：`zero_copy_enable` + `buffer_pool_size`（仅影响 BGR 输出）
-- GPU pipeline：`gpu_pipeline_enable`/`gpu_device_id`/`gpu_stream_enable`
-- GPU 端输出：`gpu_output_only=1` 时 GPU 去马赛克不回拷贝 CPU，`Frame::bgr` 不保证有效
-- GPU 后处理（需 OpenCV CUDA）：`gpu_undistort_enable`/`gpu_rotate_180`/`gpu_resize_enable`
-  - `gpu_resize_enable` 需要 `gpu_output_only=1`，并设置 `gpu_resize_width/height`（仅 GPU 输出）
-- GPU 去马赛克预留：`gpu_demosaic_enable` + `gpu_demosaic_backend` + `bayer_pattern`
-  - `gpu_demosaic_backend=auto`：优先 OpenCV CUDA，其次 NPP
-  - `gpu_demosaic_backend=opencv`：只用 OpenCV CUDA
-  - `gpu_demosaic_backend=npp`：只用 NPP（不依赖 OpenCV CUDA）
-- `bayer_pattern` 支持 `auto/GB/GR/BG/RG`，`auto` 会基于像素格式自动推断
-- CS016（彩色）常见 Bayer RG，建议 `bayer_pattern=RG`
-
+- 设备选择：serial_number/use_first_device/device_index
+- 触发与帧率：trigger_mode/trigger_source，frame_rate_enable/frame_rate
+- 畸变校正：undistort_enable=1 + calib_path（CPU）
+- calib_path 支持 ROS YAML（camera_matrix/distortion_coefficients 或 K/D）
+- 自动曝光限幅：auto_exposure_time_lower_us/auto_exposure_time_upper_us（会自动夹紧到设备范围）
+- Gamma/亮度：gamma_enable/gamma_selector/gamma，brightness_enable/brightness
+- 重连：reconnect_enable + reconnect_*
+- 参数持久化：feature_load_*、feature_save_*
+- ROI：roi_enable/roi_offset_x/roi_offset_y/roi_width/roi_height
+- 输出：output_bgr/output_raw/copy_raw（copy_raw=0 仅在回调模式下有效）
+- 零拷贝帧池：zero_copy_enable + buffer_pool_size（仅影响 BGR 输出）
+- GPU pipeline：gpu_pipeline_enable/gpu_device_id/gpu_stream_enable
+- GPU 端输出：gpu_output_only=1 时 GPU 去马赛克不回拷贝 CPU，Frame::bgr 不保证有效
+- GPU 后处理（需 OpenCV CUDA）：gpu_undistort_enable/gpu_rotate_180/gpu_resize_enable
+  - gpu_resize_enable 需要 gpu_output_only=1，并设置 gpu_resize_width/height（仅 GPU 输出）
+- GPU 去马赛克预留：gpu_demosaic_enable + gpu_demosaic_backend + bayer_pattern
+  - gpu_demosaic_backend=auto：优先 OpenCV CUDA，其次 NPP
+  - gpu_demosaic_backend=opencv：只用 OpenCV CUDA
+  - gpu_demosaic_backend=npp：只用 NPP（不依赖 OpenCV CUDA）
+- bayer_pattern 支持 auto/GB/GR/BG/RG，auto 会基于像素格式自动推断
+- CS016（彩色）常见 Bayer RG，建议 bayer_pattern=RG
 
 ## 高性能推理支持
 
 该功能面向高性能推理引擎（如 ORT CUDA / TensorRT）设计，用于减少 CPU 拷贝并降低 H2D 阻塞：
 
 - 零拷贝帧池：采集直接写入预分配缓冲池，避免重复分配
-- pinned 内存：`cudaHostRegister` 注册帧池，提高 H2D 带宽
+- pinned 内存：cudaHostRegister 注册帧池，提高 H2D 带宽
 - GPU 去马赛克：OpenCV CUDA 或 NPP 直接在 GPU 生成 BGR
 
 ### 路径解析规则
 
 - 相对路径默认以配置文件所在目录为基准。
-- 以 `config/` 开头的路径会自动映射到项目根目录的 `config/`。
+- 以 config/ 开头的路径会自动映射到项目根目录的 config/。
 
 ### GPU 功能生效判断（日志输出）
 
-- `Pinned pool enabled`：说明 pinned 内存注册生效。
-- `GPU demosaic active (opencv/npp)`：说明 GPU 去马赛克已启用。
-- `GPU post-process active`：说明 GPU 后处理已启用。
+- Pinned pool enabled：说明 pinned 内存注册生效。
+- GPU demosaic active (opencv/npp)：说明 GPU 去马赛克已启用。
+- GPU post-process active：说明 GPU 后处理已启用。
 
 ## CUDA/NPP 开关说明：避免环境不支持导致编译失败
 
-- 只走 CPU：重新 `cmake` 时加 `-DHIK_CAMERA_ENABLE_CUDA=OFF -DHIK_CAMERA_ENABLE_NPP=OFF`。
-- 已启用 CUDA/NPP 但想临时不用：在 `config.yaml` 把 `gpu_pipeline_enable`/`gpu_demosaic_enable` 设为 `0`。
+- 只走 CPU：重新 cmake 时加 -DHIK_CAMERA_ENABLE_CUDA=OFF -DHIK_CAMERA_ENABLE_NPP=OFF。
+- 已启用 CUDA/NPP 但想临时不用：在 config.yaml 把 gpu_pipeline_enable/gpu_demosaic_enable 设为 0。
 
 ## 环境要求与测试设备
 
@@ -200,24 +199,27 @@ cmake .. -DMVS_ROOT=/opt/MVS -DCMAKE_CUDA_ARCHITECTURES=86
 
 ## 备注
 
-- 为最大 FPS，建议关闭 `--show`，并避免在采集线程做重计算。
+- 为最大 FPS，建议关闭 --show，并避免在采集线程做重计算。
 - USB 带宽限制时，可启用 ROI 以提高帧率。
-- GPU-only 推理建议开启 `gpu_output_only=1`，不要用 `--show`，下游直接消费 `gpu_bgr_ptr`。
-- `read()` 模式始终拷贝 raw；`copy_raw=0` 仅在回调模式下 raw 指针有效。
-- `zero_copy_enable=1` 时，`bgr_ptr` 仅在下一帧覆盖前有效，不保证跨帧持久。
-- `gpu_output_only=1` 时仅提供 `gpu_bgr_ptr/gpu_stream`，CPU 端 `Frame::bgr` 可能为空。
-- `pixel_format` 使用 MVS 数值枚举（例如 BayerRG8=17301513，BGR8=35127317），设置为 `0` 表示保持相机默认。
+- GPU-only 推理建议开启 gpu_output_only=1，不要用 --show，下游直接消费 gpu_bgr_ptr。
+- read() 模式始终拷贝 raw；copy_raw=0 仅在回调模式下 raw 指针有效。
+- zero_copy_enable=1 时，bgr_ptr 仅在下一帧覆盖前有效，不保证跨帧持久。
+- gpu_output_only=1 时仅提供 gpu_bgr_ptr/gpu_stream，CPU 端 Frame::bgr 可能为空。
+- pixel_format 使用 MVS 数值枚举（例如 BayerRG8=17301513，BGR8=35127317），设置为 0 表示保持相机默认。
 - GPU 去马赛克依赖 CUDA；OpenCV CUDA 或 NPP 至少其一可用。
 
 ## 常见问题
 
-1) 画面黑屏但帧率正常  
-   - 多数是 `gpu_output_only=1` + `--show`，将 `gpu_output_only` 设为 `0` 再显示。
+1. 画面黑屏但帧率正常
 
-2) 帧率跑不满标称值  
-   - `AcquisitionFrameRate` 已设置但 FPS 低，多数为 USB 链路吞吐限制。可通过 ROI 降低带宽验证。
+   - 多数是 gpu_output_only=1 + --show，将 gpu_output_only 设为 0 再显示。
 
-3) 若需要 OpenCV CUDA 支持 （可选）
+2. 帧率跑不满标称值
+
+   - AcquisitionFrameRate 已设置但 FPS 低，多数为 USB 链路吞吐限制。可通过 ROI 降低带宽验证。
+
+3. 若需要 OpenCV CUDA 支持（可选）
+
    - 在 Ubuntu 22.04 上需从源码编译 OpenCV 并开启 CUDA，避免使用不含 CUDA 的系统包。
    - https://blog.csdn.net/SoNg_ch_/article/details/132054785
    - https://blog.csdn.net/Natsuago/article/details/145785243
